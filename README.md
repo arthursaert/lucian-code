@@ -17,7 +17,7 @@ Lucian Code não é apenas um chatbot. É um agente que raciocina, planeja e exe
 
 ## Requisitos
 
-- Node.js 18 ou superior
+- Node.js 20.6 ou superior
 - Uma chave de API do OpenRouter (https://openrouter.ai)
 - Uma API Key do Maritaca AI (opcional)
 
