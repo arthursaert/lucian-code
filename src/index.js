@@ -41,6 +41,8 @@ async function main() {
   };
 
   const agent = new Agent(provider, memory, context);
+  context.agent = agent; // Fix #1: expose agent on context so /reset can clear history
+
   const rl = createInterface({ input: stdin, output: stdout });
 
   console.log("System initialized. Type /help for commands.\n");
