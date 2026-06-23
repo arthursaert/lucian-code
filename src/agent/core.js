@@ -9,7 +9,12 @@ export class Agent {
     this.memory = memory;
     this.context = context;
     this.toolExecutor = new ToolExecutor();
-    this.maxIterations = 10; // Prevent infinite loops
+    this.maxIterations = 10;
+    this.conversationHistory = []; // Fix #1: persistent conversation history
+  }
+
+  clearHistory() {
+    this.conversationHistory = [];
   }
 
   async processInput(userInput) {
@@ -18,12 +23,14 @@ export class Agent {
 
     const systemPrompt = getSystemPrompt(this.context.mode);
 
+    // Fix #1: add user message to history, then build messages from it
+    this.conversationHistory.push({ role: "user", content: userInput });
+
     const messages = [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userInput },
+      ...this.conversationHistory,
     ];
 
-    // Em BUILD MODE, usar tools
     const useTools = this.context.mode === "BUILD";
     const tools = useTools ? TOOL_DEFINITIONS : null;
 
@@ -33,18 +40,16 @@ export class Agent {
       let iteration = 0;
       let finalResponse = null;
 
-      // Loop de tool calling (apenas em BUILD MODE)
       while (iteration < this.maxIterations) {
         iteration++;
 
         const response = await this.provider.complete(messages, tools);
 
-        // Se o modelo quer chamar uma tool (e estamos usando tools)
         if (useTools && response.tool_calls && response.tool_calls.length > 0) {
-          // Adicionar a resposta do assistente ao histórico
+          // Push assistant message (with tool_calls) to both
           messages.push(response);
+          this.conversationHistory.push(response);
 
-          // Executar cada tool call
           for (const toolCall of response.tool_calls) {
             console.log(`\n[Tool Call] ${toolCall.function.name}`);
 
@@ -59,14 +64,15 @@ export class Agent {
 
               console.log(`Result: ${result.message || "Success"}`);
 
-              // Adicionar resultado ao histórico
-              messages.push({
+              const toolResult = {
                 role: "tool",
                 tool_call_id: toolCall.id,
                 content: JSON.stringify(result),
-              });
+              };
 
-              // Registrar na memória
+              messages.push(toolResult);
+              this.conversationHistory.push(toolResult);
+
               this.memory.state.executedSteps.push({
                 tool: toolCall.function.name,
                 params: params,
@@ -76,20 +82,28 @@ export class Agent {
             } catch (error) {
               console.log(`Error: ${error.message}`);
 
-              messages.push({
+              const toolError = {
                 role: "tool",
                 tool_call_id: toolCall.id,
                 content: JSON.stringify({ error: error.message }),
-              });
+              };
+
+              messages.push(toolError);
+              this.conversationHistory.push(toolError);
             }
           }
 
-          // Continuar o loop para o modelo processar os resultados
           continue;
         }
 
-        // Se não há tool calls, o modelo terminou
         finalResponse = response.content;
+
+        // Push final assistant response to history
+        this.conversationHistory.push({
+          role: "assistant",
+          content: finalResponse,
+        });
+
         break;
       }
 
@@ -99,7 +113,6 @@ export class Agent {
         );
       }
 
-      // Exibir resposta final
       if (finalResponse) {
         Logger.agent("OUTPUT", "Rendering result");
         console.log("\n--- Agent Output ---");
@@ -107,12 +120,13 @@ export class Agent {
         console.log("--------------------\n");
       }
 
-      // Atualizar memória
       if (this.context.mode === "PLAN" || this.context.mode === "BUILD") {
         this.memory.update("lastGoal", userInput);
         this.memory.update("lastPlan", finalResponse || "Execution completed");
       }
     } catch (error) {
+      // Remove the user message on error to avoid corrupted history
+      this.conversationHistory.pop();
       this.handleError(error);
     }
   }

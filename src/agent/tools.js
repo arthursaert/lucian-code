@@ -259,7 +259,7 @@ export class ToolExecutor {
       throw new Error(`Text pattern not found in file: ${path}`);
     }
 
-    content = content.replace(oldText, newText);
+    content = content.split(oldText).join(newText);
     writeFileSync(fullPath, content, "utf-8");
     Logger.info(`Replaced text in file: ${fullPath}`);
 
