@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import "dotenv/config";
 import { createInterface } from "readline/promises";
 import { stdin, stdout } from "process";
 import { CONFIG } from "./core/config.js";
