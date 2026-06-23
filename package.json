@@ -15,6 +15,9 @@
     "build:macos-arm": "bun build src/index.js --compile --target=bun-darwin-arm64 --outfile dist/lucian-macos-arm",
     "build:all": "npm run build:win && npm run build:linux && npm run build:macos && npm run build:macos-arm"
   },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
   "engines": {
     "node": ">=18.0.0"
   }
