@@ -31,6 +31,7 @@ async function main() {
   );
 
   const context = {
+    providerName: CONFIG.PROVIDERS.OPENROUTER,
     mode: CONFIG.MODES.CHAT,
     model: CONFIG.DEFAULT_MODEL,
     provider: provider,
@@ -41,7 +42,7 @@ async function main() {
   };
 
   const agent = new Agent(provider, memory, context);
-  context.agent = agent; // Fix #1: expose agent on context so /reset can clear history
+  context.agent = agent;
 
   const rl = createInterface({ input: stdin, output: stdout });
 
