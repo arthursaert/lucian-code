@@ -42,9 +42,27 @@ export function parseCommand(input, context) {
       }
       return { type: "SYSTEM", payload: null };
 
+    // Fix #3: implement missing /set-fallback command
+    case "/set-fallback":
+      if (!args) {
+        console.log("Usage: /set-fallback <model_name>\n");
+      } else {
+        context.provider.setFallback(args);
+        console.log(`Fallback model set to: ${args}\n`);
+      }
+      return { type: "SYSTEM", payload: null };
+
+    // Fix #3: implement missing /models command
+    case "/models":
+      console.log(`Active Model:   ${context.model}`);
+      console.log(`Fallback Model: ${context.provider.fallbackModel}\n`);
+      return { type: "SYSTEM", payload: null };
+
     case "/reset":
       context.memory.reset();
-      console.log("Session memory cleared.\n");
+      // Fix #1: also clear conversation history on reset
+      if (context.agent) context.agent.clearHistory();
+      console.log("Session memory and conversation history cleared.\n");
       return { type: "SYSTEM", payload: null };
 
     case "/status":

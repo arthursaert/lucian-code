@@ -2,11 +2,11 @@ import { CONFIG } from "../core/config.js";
 
 export function printBanner() {
   const banner = `
- ___       ___  ___  ________  ___  ________  ________           ________  ________  ________  _______
-|\\  \\     |\\  \\|\\  \\|\\   ____\\|\\  \\|\\   __  \\|\\   ___  \\        |\\   ____\\|\\   __  \\|\\   ___ \\|\\  ___ \\
-\\ \\  \\    \\ \\  \\\\\\  \\ \\  \\___|\\ \\  \\ \\  \\|\\  \\ \\  \\\\ \\  \\       \\ \\  \\___|\\ \\  \\|\\  \\ \\  \\_|\\ \\ \\   __/|
- \\ \\  \\    \\ \\  \\\\\\  \\ \\  \\    \\ \\  \\ \\   __  \\ \\  \\\\ \\  \\       \\ \\  \\    \\ \\  \\\\\\  \\ \\  \\\\ \\ \\  \\_|/__
-  \\ \\  \\____\\ \\  \\\\\\  \\ \\  \\____\\ \\  \\ \\  \\ \\  \\ \\  \\\\ \\  \\       \\ \\  \\____\\ \\  \\\\\\  \\ \\  \_\\\\ \\ \\  \\_|\\ \\
+ ___       ___  ___  ________  ___  ________  ________           ________  ________  ________  _______   
+|\\  \\     |\\  \\|\\  \\|\\   ____\\|\\  \\|\\   __  \\|\\   ___  \\        |\\   ____\\|\\   __  \\|\\   ___ \\|\\  ___ \\  
+\\ \\  \\    \\ \\  \\\\\\  \\ \\  \\___|\\ \\  \\ \\  \\|\\  \\ \\  \\\\ \\  \\       \\ \\  \\___|\\ \\  \\|\\  \\ \\  \\_|\\ \\ \\   __/| 
+ \\ \\  \\    \\ \\  \\\\\\  \\ \\  \\    \\ \\  \\ \\   __  \\ \\  \\\\ \\  \\       \\ \\  \\    \\ \\  \\\\\\  \\ \\  \\ \\\\ \\ \\  \\_|/__
+  \\ \\  \\____\\ \\  \\\\\\  \\ \\  \\____\\ \\  \\ \\  \\ \\  \\ \\  \\\\ \\  \\       \\ \\  \\____\\ \\  \\\\\\  \\ \\  \\_\\\\ \\ \\  \\_|\\ \\
    \\ \\_______\\ \\_______\\ \\_______\\ \\__\\ \\__\\ \\__\\ \\__\\\\ \\__\\       \\ \\_______\\ \\_______\\ \\_______\\ \\_______\\
     \\|_______|\\|_______|\\|_______|\\|__|\\|__|\\|__|\\|__| \\|__|        \\|_______|\\|_______|\\|_______|\\|_______|
   `;
@@ -18,7 +18,7 @@ export function renderStatus(state) {
   console.log("[Lucian Code]");
   console.log(`Mode:            ${state.mode}`);
   console.log(`Active Model:    ${state.model}`);
-  console.log(`Fallback Model:  ${state.fallbackModel}`);
+  console.log(`Fallback Model:  ${state.provider.fallbackModel}`); // Fix #4: was state.fallbackModel
   console.log(`Memory Goal:     ${state.memorySummary.goal}`);
   console.log(`Plan Steps:      ${state.memorySummary.planSteps}`);
   console.log(`Executed Steps:  ${state.memorySummary.executedCount}\n`);
@@ -36,7 +36,7 @@ export function printHelp() {
   console.log("  /set-fallback <m>   - Set fallback AI model");
   console.log("  /models             - Show current model configuration");
   console.log(
-    "  /reset              - Clear session memory and model preferences",
+    "  /reset              - Clear session memory and conversation history",
   );
   console.log("  /status             - Show current system status\n");
 }
