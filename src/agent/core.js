@@ -10,11 +10,6 @@ export class Agent {
     this.context = context;
     this.toolExecutor = new ToolExecutor();
     this.maxIterations = 10;
-    this.conversationHistory = []; // Fix #1: persistent conversation history
-  }
-
-  clearHistory() {
-    this.conversationHistory = [];
   }
 
   async processInput(userInput) {
@@ -23,12 +18,12 @@ export class Agent {
 
     const systemPrompt = getSystemPrompt(this.context.mode);
 
-    // Fix #1: add user message to history, then build messages from it
-    this.conversationHistory.push({ role: "user", content: userInput });
+    // Adicionar mensagem do usuário ao histórico persistente
+    this.memory.addToHistory({ role: "user", content: userInput });
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...this.conversationHistory,
+      ...this.memory.state.conversationHistory,
     ];
 
     const useTools = this.context.mode === "BUILD";
@@ -46,9 +41,8 @@ export class Agent {
         const response = await this.provider.complete(messages, tools);
 
         if (useTools && response.tool_calls && response.tool_calls.length > 0) {
-          // Push assistant message (with tool_calls) to both
           messages.push(response);
-          this.conversationHistory.push(response);
+          this.memory.addToHistory(response);
 
           for (const toolCall of response.tool_calls) {
             console.log(`\n[Tool Call] ${toolCall.function.name}`);
@@ -71,7 +65,7 @@ export class Agent {
               };
 
               messages.push(toolResult);
-              this.conversationHistory.push(toolResult);
+              this.memory.addToHistory(toolResult);
 
               this.memory.state.executedSteps.push({
                 tool: toolCall.function.name,
@@ -89,7 +83,7 @@ export class Agent {
               };
 
               messages.push(toolError);
-              this.conversationHistory.push(toolError);
+              this.memory.addToHistory(toolError);
             }
           }
 
@@ -98,8 +92,7 @@ export class Agent {
 
         finalResponse = response.content;
 
-        // Push final assistant response to history
-        this.conversationHistory.push({
+        this.memory.addToHistory({
           role: "assistant",
           content: finalResponse,
         });
@@ -125,8 +118,8 @@ export class Agent {
         this.memory.update("lastPlan", finalResponse || "Execution completed");
       }
     } catch (error) {
-      // Remove the user message on error to avoid corrupted history
-      this.conversationHistory.pop();
+      this.memory.state.conversationHistory.pop();
+      this.memory.save();
       this.handleError(error);
     }
   }

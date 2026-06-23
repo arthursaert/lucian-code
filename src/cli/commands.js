@@ -2,7 +2,7 @@ import { CONFIG } from "../core/config.js";
 import { printHelp, renderStatus } from "./ui.js";
 import { OpenRouterProvider } from "../providers/openrouter.js";
 import { OllamaProvider } from "../providers/ollama.js";
-import { MaritalkProvider, MARITALK_MODELS } from "../providers/maritalk.js";
+import { MaritalkProvider, MARITALK_MODELS } from "../providers/maritaca.js";
 
 export function parseCommand(input, context) {
   const trimmed = input.trim();
@@ -65,8 +65,8 @@ export function parseCommand(input, context) {
 
     case "/reset":
       context.memory.reset();
-      if (context.agent) context.agent.clearHistory();
-      console.log("Session memory and conversation history cleared.\n");
+      context.memory.save(); // Salvar estado limpo
+      console.log("Session memory cleared.\n");
       return { type: "SYSTEM", payload: null };
 
     case "/status":
@@ -86,10 +86,10 @@ function handleProvider(args, context) {
   if (!args[0]) {
     console.log(`Current Provider: ${context.providerName}`);
     console.log(`Active Model:     ${context.model}`);
-    console.log(`Fallback Model:   ${context.provider.fallbackModel ?? "none"}`);
     console.log(
-      "\nAvailable providers: openrouter, ollama, maritalk\n",
+      `Fallback Model:   ${context.provider.fallbackModel ?? "none"}`,
     );
+    console.log("\nAvailable providers: openrouter, ollama, maritalk\n");
     return;
   }
 
@@ -99,9 +99,7 @@ function handleProvider(args, context) {
     case CONFIG.PROVIDERS.OPENROUTER: {
       const apiKey = process.env.OPENROUTER_API_KEY;
       if (!apiKey) {
-        console.log(
-          "[ERROR] OPENROUTER_API_KEY is not set in environment.\n",
-        );
+        console.log("[ERROR] OPENROUTER_API_KEY is not set in environment.\n");
         return;
       }
       const provider = new OpenRouterProvider(
@@ -119,9 +117,7 @@ function handleProvider(args, context) {
     case CONFIG.PROVIDERS.OLLAMA: {
       const baseUrl = process.env.MODEL_LOCALHOST_URL;
       if (!baseUrl) {
-        console.log(
-          "[ERROR] MODEL_LOCALHOST_URL is not set in environment.\n",
-        );
+        console.log("[ERROR] MODEL_LOCALHOST_URL is not set in environment.\n");
         return;
       }
       const model = args[1] || "llama3";
@@ -136,9 +132,7 @@ function handleProvider(args, context) {
     case CONFIG.PROVIDERS.MARITALK: {
       const apiKey = process.env.MARITACA_API_KEY;
       if (!apiKey) {
-        console.log(
-          "[ERROR] MARITACA_API_KEY is not set in environment.\n",
-        );
+        console.log("[ERROR] MARITACA_API_KEY is not set in environment.\n");
         return;
       }
       const model = args[1] || "sabiazinho-4";

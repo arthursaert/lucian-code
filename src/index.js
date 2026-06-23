@@ -25,6 +25,17 @@ async function main() {
   }
 
   const memory = new MemoryStore();
+
+  // Carregar contexto existente
+  const loaded = memory.load();
+  if (loaded) {
+    console.log("[INFO] Context loaded from .lucian/context.json");
+  } else {
+    console.log(
+      "[INFO] Starting new session. Context will be saved in .lucian/",
+    );
+  }
+
   const provider = new OpenRouterProvider(
     apiKey,
     CONFIG.DEFAULT_MODEL,
@@ -54,6 +65,7 @@ async function main() {
 
     if (input.toLowerCase() === "exit" || input.toLowerCase() === "quit") {
       console.log("Exiting Lucian Code.");
+      memory.save(); // Salvar antes de sair
       rl.close();
       process.exit(0);
     }
