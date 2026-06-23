@@ -16,9 +16,10 @@ export function printBanner() {
 
 export function renderStatus(state) {
   console.log("[Lucian Code]");
+  console.log(`Provider:        ${state.providerName}`);
   console.log(`Mode:            ${state.mode}`);
   console.log(`Active Model:    ${state.model}`);
-  console.log(`Fallback Model:  ${state.provider.fallbackModel}`); // Fix #4: was state.fallbackModel
+  console.log(`Fallback Model:  ${state.provider.fallbackModel ?? "none"}`);
   console.log(`Memory Goal:     ${state.memorySummary.goal}`);
   console.log(`Plan Steps:      ${state.memorySummary.planSteps}`);
   console.log(`Executed Steps:  ${state.memorySummary.executedCount}\n`);
@@ -26,17 +27,17 @@ export function renderStatus(state) {
 
 export function printHelp() {
   console.log("Available Commands:");
-  console.log("  /help               - Display this help menu");
-  console.log("  /plan               - Switch to PLAN MODE");
-  console.log("  /build              - Switch to BUILD MODE");
-  console.log("  /chat               - Switch to CHAT MODE");
-  console.log(
-    "  /switch-model <m>   - Set active AI model (any OpenRouter model)",
-  );
-  console.log("  /set-fallback <m>   - Set fallback AI model");
-  console.log("  /models             - Show current model configuration");
-  console.log(
-    "  /reset              - Clear session memory and conversation history",
-  );
-  console.log("  /status             - Show current system status\n");
+  console.log("  /help                          - Display this help menu");
+  console.log("  /plan                          - Switch to PLAN MODE");
+  console.log("  /build                         - Switch to BUILD MODE");
+  console.log("  /chat                          - Switch to CHAT MODE");
+  console.log("  /switch-model <model>          - Set active model");
+  console.log("  /set-fallback <model>          - Set fallback model");
+  console.log("  /models                        - Show current model configuration");
+  console.log("  /provider                      - Show current provider");
+  console.log("  /provider openrouter           - Switch to OpenRouter");
+  console.log("  /provider ollama [model]       - Switch to Ollama (local)");
+  console.log("  /provider maritalk [model]     - Switch to MariTalk (sabiazinho-4 | sabia-4)");
+  console.log("  /reset                         - Clear session memory and history");
+  console.log("  /status                        - Show current system status\n");
 }
