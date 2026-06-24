@@ -1,7 +1,7 @@
 import { CONFIG } from "../core/config.js";
 import { printHelp, renderStatus } from "./ui.js";
 import { OpenRouterProvider } from "../providers/openrouter.js";
-import { MaritacaProvider } from "../providers/maritaca.js";
+import { MaritalkProvider } from "../providers/maritaca.js";
 import { OllamaProvider } from "../providers/ollama.js";
 
 export function parseCommand(input, context) {
@@ -74,10 +74,9 @@ export function parseCommand(input, context) {
                 );
                 return { type: "SYSTEM", payload: null };
               }
-              newProvider = new MaritacaProvider(
+              newProvider = new MaritalkProvider(
                 process.env.MARITACA_API_KEY,
-                CONFIG.MARITACA_DEFAULT_MODEL || CONFIG.DEFAULT_MODEL,
-                CONFIG.MARITACA_FALLBACK_MODEL || CONFIG.FALLBACK_MODEL,
+                CONFIG.MARITACA_DEFAULT_MODEL || "sabiazinho-4",
               );
               break;
 
@@ -86,8 +85,7 @@ export function parseCommand(input, context) {
                 process.env.MODEL_LOCALHOST_URL || "http://localhost:11434";
               newProvider = new OllamaProvider(
                 ollamaUrl,
-                CONFIG.OLLAMA_DEFAULT_MODEL || "llama2",
-                CONFIG.OLLAMA_FALLBACK_MODEL || "mistral",
+                CONFIG.OLLAMA_DEFAULT_MODEL || "llama3",
               );
               break;
           }
@@ -108,13 +106,17 @@ export function parseCommand(input, context) {
         console.log("Usage: /switch-model <model_name>");
         console.log("Example: /switch-model anthropic/claude-3.5-sonnet\n");
       } else {
-        context.provider.setModel(args);
-        context.model = args;
-        context.memory.update("preferredModel", args);
-        console.log(`Active model set to: ${args}`);
-        console.log(
-          "Note: Model validity will be confirmed on next request.\n",
-        );
+        try {
+          context.provider.setModel(args);
+          context.model = args;
+          context.memory.update("preferredModel", args);
+          console.log(`Active model set to: ${args}`);
+          console.log(
+            "Note: Model validity will be confirmed on next request.\n",
+          );
+        } catch (error) {
+          console.log(`[ERROR] ${error.message}\n`);
+        }
       }
       return { type: "SYSTEM", payload: null };
 

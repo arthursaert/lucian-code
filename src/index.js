@@ -8,30 +8,26 @@ import { parseCommand } from "./cli/commands.js";
 import { printBanner } from "./cli/ui.js";
 import { MemoryStore } from "./memory/store.js";
 import { OpenRouterProvider } from "./providers/openrouter.js";
-import { MaritacaProvider } from "./providers/maritaca.js";
+import { MaritalkProvider } from "./providers/maritaca.js";
 import { OllamaProvider } from "./providers/ollama.js";
 
 async function main() {
   printBanner();
 
-  // Determinar qual provider usar baseado em variáveis de ambiente
   let provider;
   let providerName;
-  let apiKey;
 
   if (process.env.MARITACA_API_KEY) {
     providerName = CONFIG.PROVIDERS.MARITACA;
-    provider = new MaritacaProvider(
+    provider = new MaritalkProvider(
       process.env.MARITACA_API_KEY,
-      CONFIG.MARITACA_DEFAULT_MODEL,
-      CONFIG.MARITACA_FALLBACK_MODEL,
+      CONFIG.MARITACA_DEFAULT_MODEL || "sabiazinho-4",
     );
   } else if (process.env.MODEL_LOCALHOST_URL) {
     providerName = CONFIG.PROVIDERS.OLLAMA;
     provider = new OllamaProvider(
       process.env.MODEL_LOCALHOST_URL,
-      CONFIG.OLLAMA_DEFAULT_MODEL,
-      CONFIG.OLLAMA_FALLBACK_MODEL,
+      CONFIG.OLLAMA_DEFAULT_MODEL || "llama3",
     );
   } else if (process.env.OPENROUTER_API_KEY) {
     providerName = CONFIG.PROVIDERS.OPENROUTER;
