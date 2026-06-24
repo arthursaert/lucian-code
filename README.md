@@ -134,6 +134,43 @@ Projeto criado com sucesso. Para executar:
 --------------------
 ```
 
+## Customização por Projeto (LUCIAN.md)
+
+Você pode personalizar o comportamento do Lucian para cada projeto criando um arquivo `LUCIAN.md` na raiz do projeto onde você executa o CLI.
+
+O arquivo é carregado automaticamente em toda sessão e injetado no system prompt — em todos os modos (CHAT, PLAN e BUILD).
+
+Um `LUCIAN.md` padrão é incluído no repositório como ponto de partida. Edite-o conforme as necessidades do seu projeto:
+
+```markdown
+# LUCIAN.md
+
+## Project Overview
+Esta é uma API REST em Node.js com Express e PostgreSQL via Prisma.
+
+## Tech Stack
+- Language: TypeScript
+- Framework: Express
+- Database: PostgreSQL
+
+## Code Style & Conventions
+- Use ES Modules
+- Prefer async/await
+- File names: kebab-case
+
+## Behavioral Rules
+- Nunca use console.log — use o Logger em src/utils/logger.js
+- Não instale dependências sem perguntar primeiro
+```
+
+**Como funciona:**
+
+1. Ao iniciar o Lucian, ele busca `LUCIAN.md` no diretório de trabalho atual (`process.cwd()`).
+2. Se encontrado, o conteúdo é adicionado ao system prompt de todos os modos.
+3. Se não encontrado, o comportamento padrão é mantido sem alterações.
+
+O `LUCIAN.md` é ideal para definir o stack do projeto, convenções de código, estrutura de diretórios e regras específicas que o agente deve seguir.
+
 ## Arquitetura
 
 ```
