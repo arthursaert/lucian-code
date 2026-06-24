@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import "dotenv/config";
 import { createInterface } from "readline/promises";
 import { stdin, stdout } from "process";
 import { CONFIG } from "./core/config.js";
@@ -9,24 +8,48 @@ import { parseCommand } from "./cli/commands.js";
 import { printBanner } from "./cli/ui.js";
 import { MemoryStore } from "./memory/store.js";
 import { OpenRouterProvider } from "./providers/openrouter.js";
+import { MaritacaProvider } from "./providers/maritaca.js";
+import { OllamaProvider } from "./providers/ollama.js";
 
 async function main() {
   printBanner();
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    console.error(
-      "[ERROR] OPENROUTER_API_KEY environment variable is not set.",
+  // Determinar qual provider usar baseado em variáveis de ambiente
+  let provider;
+  let providerName;
+  let apiKey;
+
+  if (process.env.MARITACA_API_KEY) {
+    providerName = CONFIG.PROVIDERS.MARITACA;
+    provider = new MaritacaProvider(
+      process.env.MARITACA_API_KEY,
+      CONFIG.MARITACA_DEFAULT_MODEL,
+      CONFIG.MARITACA_FALLBACK_MODEL,
     );
+  } else if (process.env.MODEL_LOCALHOST_URL) {
+    providerName = CONFIG.PROVIDERS.OLLAMA;
+    provider = new OllamaProvider(
+      process.env.MODEL_LOCALHOST_URL,
+      CONFIG.OLLAMA_DEFAULT_MODEL,
+      CONFIG.OLLAMA_FALLBACK_MODEL,
+    );
+  } else if (process.env.OPENROUTER_API_KEY) {
+    providerName = CONFIG.PROVIDERS.OPENROUTER;
+    provider = new OpenRouterProvider(
+      process.env.OPENROUTER_API_KEY,
+      CONFIG.DEFAULT_MODEL,
+      CONFIG.FALLBACK_MODEL,
+    );
+  } else {
+    console.error("[ERROR] No provider API key found.");
     console.error(
-      "Please set it in your .env file or export it in your terminal.",
+      "Please set one of: OPENROUTER_API_KEY, MARITACA_API_KEY, or MODEL_LOCALHOST_URL",
     );
     process.exit(1);
   }
 
   const memory = new MemoryStore();
 
-  // Carregar contexto existente
   const loaded = memory.load();
   if (loaded) {
     console.log("[INFO] Context loaded from .lucian/context.json");
@@ -36,16 +59,11 @@ async function main() {
     );
   }
 
-  const provider = new OpenRouterProvider(
-    apiKey,
-    CONFIG.DEFAULT_MODEL,
-    CONFIG.FALLBACK_MODEL,
-  );
-
   const context = {
-    providerName: CONFIG.PROVIDERS.OPENROUTER,
+    providerName: providerName,
     mode: CONFIG.MODES.CHAT,
-    model: CONFIG.DEFAULT_MODEL,
+    model: provider.activeModel,
+    fallbackModel: provider.fallbackModel,
     provider: provider,
     memory: memory,
     get memorySummary() {
@@ -58,14 +76,15 @@ async function main() {
 
   const rl = createInterface({ input: stdin, output: stdout });
 
-  console.log("System initialized. Type /help for commands.\n");
+  console.log(`System initialized with ${providerName} provider.`);
+  console.log("Type /help for commands.\n");
 
   while (true) {
     const input = await rl.question("lucian> ");
 
     if (input.toLowerCase() === "exit" || input.toLowerCase() === "quit") {
       console.log("Exiting Lucian Code.");
-      memory.save(); // Salvar antes de sair
+      memory.save();
       rl.close();
       process.exit(0);
     }

@@ -1,8 +1,8 @@
 import { CONFIG } from "../core/config.js";
 import { printHelp, renderStatus } from "./ui.js";
 import { OpenRouterProvider } from "../providers/openrouter.js";
+import { MaritacaProvider } from "../providers/maritaca.js";
 import { OllamaProvider } from "../providers/ollama.js";
-import { MaritalkProvider, MARITALK_MODELS } from "../providers/maritaca.js";
 
 export function parseCommand(input, context) {
   const trimmed = input.trim();
@@ -13,7 +13,7 @@ export function parseCommand(input, context) {
 
   const parts = trimmed.split(" ");
   const command = parts[0].toLowerCase();
-  const args = parts.slice(1);
+  const args = parts.slice(1).join(" ").trim();
 
   switch (command) {
     case "/help":
@@ -35,37 +35,111 @@ export function parseCommand(input, context) {
       console.log("Switched to CHAT MODE.\n");
       return { type: "SYSTEM", payload: null };
 
-    case "/switch-model":
-      if (!args[0]) {
-        console.log("Usage: /switch-model <model_name>\n");
+    case "/switch-provider":
+      if (!args) {
+        console.log("Usage: /switch-provider <provider_name>");
+        console.log("Available providers: openrouter, maritaca, ollama");
+        console.log("Example: /switch-provider maritaca\n");
       } else {
-        context.provider.setModel(args[0]);
-        context.model = args[0];
-        console.log(`Model switched to: ${args[0]}\n`);
+        const providerName = args.toLowerCase();
+
+        if (!Object.values(CONFIG.PROVIDERS).includes(providerName)) {
+          console.log(`Unknown provider: ${providerName}`);
+          console.log("Available providers: openrouter, maritaca, ollama\n");
+          return { type: "SYSTEM", payload: null };
+        }
+
+        try {
+          let newProvider;
+
+          switch (providerName) {
+            case CONFIG.PROVIDERS.OPENROUTER:
+              if (!process.env.OPENROUTER_API_KEY) {
+                console.log(
+                  "[ERROR] OPENROUTER_API_KEY environment variable is not set.\n",
+                );
+                return { type: "SYSTEM", payload: null };
+              }
+              newProvider = new OpenRouterProvider(
+                process.env.OPENROUTER_API_KEY,
+                CONFIG.DEFAULT_MODEL,
+                CONFIG.FALLBACK_MODEL,
+              );
+              break;
+
+            case CONFIG.PROVIDERS.MARITACA:
+              if (!process.env.MARITACA_API_KEY) {
+                console.log(
+                  "[ERROR] MARITACA_API_KEY environment variable is not set.\n",
+                );
+                return { type: "SYSTEM", payload: null };
+              }
+              newProvider = new MaritacaProvider(
+                process.env.MARITACA_API_KEY,
+                CONFIG.MARITACA_DEFAULT_MODEL || CONFIG.DEFAULT_MODEL,
+                CONFIG.MARITACA_FALLBACK_MODEL || CONFIG.FALLBACK_MODEL,
+              );
+              break;
+
+            case CONFIG.PROVIDERS.OLLAMA:
+              const ollamaUrl =
+                process.env.MODEL_LOCALHOST_URL || "http://localhost:11434";
+              newProvider = new OllamaProvider(
+                ollamaUrl,
+                CONFIG.OLLAMA_DEFAULT_MODEL || "llama2",
+                CONFIG.OLLAMA_FALLBACK_MODEL || "mistral",
+              );
+              break;
+          }
+
+          context.provider = newProvider;
+          context.providerName = providerName;
+          context.model = newProvider.activeModel;
+          console.log(`Provider switched to: ${providerName}`);
+          console.log(`Active model: ${context.model}\n`);
+        } catch (error) {
+          console.log(`[ERROR] Failed to switch provider: ${error.message}\n`);
+        }
+      }
+      return { type: "SYSTEM", payload: null };
+
+    case "/switch-model":
+      if (!args) {
+        console.log("Usage: /switch-model <model_name>");
+        console.log("Example: /switch-model anthropic/claude-3.5-sonnet\n");
+      } else {
+        context.provider.setModel(args);
+        context.model = args;
+        context.memory.update("preferredModel", args);
+        console.log(`Active model set to: ${args}`);
+        console.log(
+          "Note: Model validity will be confirmed on next request.\n",
+        );
       }
       return { type: "SYSTEM", payload: null };
 
     case "/set-fallback":
-      if (!args[0]) {
-        console.log("Usage: /set-fallback <model_name>\n");
+      if (!args) {
+        console.log("Usage: /set-fallback <model_name>");
+        console.log("Example: /set-fallback openai/gpt-4o-mini\n");
       } else {
-        context.provider.setFallback(args[0]);
-        console.log(`Fallback model set to: ${args[0]}\n`);
+        context.provider.setFallback(args);
+        context.fallbackModel = args;
+        context.memory.update("preferredFallback", args);
+        console.log(`Fallback model set to: ${args}\n`);
       }
       return { type: "SYSTEM", payload: null };
 
     case "/models":
-      console.log(`Active Model:   ${context.model}`);
-      console.log(`Fallback Model: ${context.provider.fallbackModel}\n`);
-      return { type: "SYSTEM", payload: null };
-
-    case "/provider":
-      handleProvider(args, context);
+      console.log(`Current Provider:  ${context.providerName}`);
+      console.log(`Active Model:      ${context.model}`);
+      console.log(`Fallback Model:    ${context.fallbackModel || "Not set"}`);
+      console.log("\nAvailable providers: openrouter, maritaca, ollama\n");
       return { type: "SYSTEM", payload: null };
 
     case "/reset":
       context.memory.reset();
-      context.memory.save(); // Salvar estado limpo
+      context.memory.save();
       console.log("Session memory cleared.\n");
       return { type: "SYSTEM", payload: null };
 
@@ -78,81 +152,5 @@ export function parseCommand(input, context) {
         `Unknown command: ${command}. Type /help for available commands.\n`,
       );
       return { type: "SYSTEM", payload: null };
-  }
-}
-
-function handleProvider(args, context) {
-  // /provider with no args → show current
-  if (!args[0]) {
-    console.log(`Current Provider: ${context.providerName}`);
-    console.log(`Active Model:     ${context.model}`);
-    console.log(
-      `Fallback Model:   ${context.provider.fallbackModel ?? "none"}`,
-    );
-    console.log("\nAvailable providers: openrouter, ollama, maritalk\n");
-    return;
-  }
-
-  const target = args[0].toLowerCase();
-
-  switch (target) {
-    case CONFIG.PROVIDERS.OPENROUTER: {
-      const apiKey = process.env.OPENROUTER_API_KEY;
-      if (!apiKey) {
-        console.log("[ERROR] OPENROUTER_API_KEY is not set in environment.\n");
-        return;
-      }
-      const provider = new OpenRouterProvider(
-        apiKey,
-        CONFIG.DEFAULT_MODEL,
-        CONFIG.FALLBACK_MODEL,
-      );
-      context.provider = provider;
-      context.providerName = CONFIG.PROVIDERS.OPENROUTER;
-      context.model = CONFIG.DEFAULT_MODEL;
-      console.log(`Switched to OpenRouter. Model: ${CONFIG.DEFAULT_MODEL}\n`);
-      break;
-    }
-
-    case CONFIG.PROVIDERS.OLLAMA: {
-      const baseUrl = process.env.MODEL_LOCALHOST_URL;
-      if (!baseUrl) {
-        console.log("[ERROR] MODEL_LOCALHOST_URL is not set in environment.\n");
-        return;
-      }
-      const model = args[1] || "llama3";
-      const provider = new OllamaProvider(baseUrl, model);
-      context.provider = provider;
-      context.providerName = CONFIG.PROVIDERS.OLLAMA;
-      context.model = model;
-      console.log(`Switched to Ollama (${baseUrl}). Model: ${model}\n`);
-      break;
-    }
-
-    case CONFIG.PROVIDERS.MARITALK: {
-      const apiKey = process.env.MARITACA_API_KEY;
-      if (!apiKey) {
-        console.log("[ERROR] MARITACA_API_KEY is not set in environment.\n");
-        return;
-      }
-      const model = args[1] || "sabiazinho-4";
-      if (!MARITALK_MODELS.includes(model)) {
-        console.log(
-          `[ERROR] Invalid MariTalk model: '${model}'.\nAvailable: ${MARITALK_MODELS.join(", ")}\n`,
-        );
-        return;
-      }
-      const provider = new MaritalkProvider(apiKey, model);
-      context.provider = provider;
-      context.providerName = CONFIG.PROVIDERS.MARITALK;
-      context.model = model;
-      console.log(`Switched to MariTalk. Model: ${model}\n`);
-      break;
-    }
-
-    default:
-      console.log(
-        `[ERROR] Unknown provider: '${target}'.\nAvailable: openrouter, ollama, maritalk\n`,
-      );
   }
 }
