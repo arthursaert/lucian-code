@@ -57,6 +57,9 @@ temp/
 Thumbs.db
 Desktop.ini
 
+# lucian things
+.lucian
+
 # Compiled binaries
 lucian
 lucian.exe

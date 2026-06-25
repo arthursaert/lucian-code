@@ -16,7 +16,7 @@
     "build:all": "npm run build:win && npm run build:linux && npm run build:macos && npm run build:macos-arm"
   },
   "dependencies": {
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.6.1"
   },
   "engines": {
     "node": ">=18.0.0"
