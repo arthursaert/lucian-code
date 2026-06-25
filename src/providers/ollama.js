@@ -2,39 +2,50 @@ import { BaseProvider } from "./base.js";
 import { Logger } from "../utils/logger.js";
 
 export class OllamaProvider extends BaseProvider {
-  constructor(baseUrl, model = "llama3") {
+  constructor(baseUrl, model = "llama3.2") {
     super();
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.activeModel = model;
     this.fallbackModel = null;
   }
 
+  // novo metodo de colocar modelo
   setModel(model) {
     this.activeModel = model;
+    console.log(`[Ollama] Model set to: ${model}`);
   }
 
+  // adicionar metodo setFallback
   setFallback(model) {
     this.fallbackModel = model;
+    console.log(`[Ollama] Fallback model set to: ${model}`);
   }
 
   async complete(messages, tools = null, modelOverride = null) {
     const model = modelOverride || this.activeModel;
 
+    // formatar mensagens para o formato do ollama
+    const formattedMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
     const requestBody = {
-      model,
-      messages,
+      model: model,
+      messages: formattedMessages,
       stream: false,
+      options: {
+        temperature: 0.7,
+      }
     };
 
-    if (tools && tools.length > 0) {
-      requestBody.tools = tools;
-      requestBody.tool_choice = "auto";
-    }
-
     try {
-      const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+      // usar endpoint nativo do llama
+      const response = await fetch(`${this.baseUrl}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json" 
+        },
         body: JSON.stringify(requestBody),
       });
 
@@ -45,11 +56,12 @@ export class OllamaProvider extends BaseProvider {
 
       const data = await response.json();
 
-      if (!data.choices || data.choices.length === 0) {
-        throw new Error("No response choices returned from Ollama");
-      }
-
-      return data.choices[0].message;
+      // formatar resposta para o formato esperado pelo agente
+      return {
+        role: "assistant",
+        content: data.message?.content || "No response generated",
+        tool_calls: null
+      };
     } catch (error) {
       Logger.error(`Ollama request failed: ${error.message}`);
       throw error;
