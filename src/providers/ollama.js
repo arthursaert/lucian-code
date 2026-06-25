@@ -9,13 +9,11 @@ export class OllamaProvider extends BaseProvider {
     this.fallbackModel = null;
   }
 
-  // novo metodo de colocar modelo
   setModel(model) {
     this.activeModel = model;
     console.log(`[Ollama] Model set to: ${model}`);
   }
 
-  // adicionar metodo setFallback
   setFallback(model) {
     this.fallbackModel = model;
     console.log(`[Ollama] Fallback model set to: ${model}`);
@@ -24,10 +22,9 @@ export class OllamaProvider extends BaseProvider {
   async complete(messages, tools = null, modelOverride = null) {
     const model = modelOverride || this.activeModel;
 
-    // formatar mensagens para o formato do ollama
-    const formattedMessages = messages.map(msg => ({
+    const formattedMessages = messages.map((msg) => ({
       role: msg.role,
-      content: msg.content
+      content: msg.content,
     }));
 
     const requestBody = {
@@ -36,15 +33,14 @@ export class OllamaProvider extends BaseProvider {
       stream: false,
       options: {
         temperature: 0.7,
-      }
+      },
     };
 
     try {
-      // usar endpoint nativo do llama
       const response = await fetch(`${this.baseUrl}/api/chat`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json" 
+        headers: {
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
@@ -56,15 +52,93 @@ export class OllamaProvider extends BaseProvider {
 
       const data = await response.json();
 
-      // formatar resposta para o formato esperado pelo agente
       return {
         role: "assistant",
         content: data.message?.content || "No response generated",
-        tool_calls: null
+        tool_calls: null,
       };
     } catch (error) {
       Logger.error(`Ollama request failed: ${error.message}`);
       throw error;
     }
+  }
+
+  async completeStream(messages) {
+    const formattedMessages = messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    const requestBody = {
+      model: this.activeModel,
+      messages: formattedMessages,
+      stream: true,
+      options: {
+        temperature: 0.7,
+      },
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorBody}`);
+      }
+
+      return await this.processNDJSONStream(response);
+    } catch (error) {
+      Logger.error(`Ollama streaming failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async processNDJSONStream(response) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let fullContent = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        try {
+          const parsed = JSON.parse(trimmed);
+
+          if (parsed.message?.content) {
+            process.stdout.write(parsed.message.content);
+            fullContent += parsed.message.content;
+          }
+
+          if (parsed.done) {
+            break;
+          }
+        } catch {
+          // Ignorar linhas malformadas
+        }
+      }
+    }
+
+    process.stdout.write("\n");
+
+    return {
+      role: "assistant",
+      content: fullContent,
+    };
   }
 }
