@@ -1,29 +1,52 @@
 # Lucian Code
 
-Um assistente de codificação agêntico de código aberto, construído com Node.js. Projetado para desenvolvedores que precisam de um parceiro de programação no terminal.
+> Alternativa gratuita e open-source ao Claude Code. Agente de codificação para o terminal com suporte a modelos locais via Ollama, OpenRouter e Maritaca AI.
 
-## Sobre
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Node](https://img.shields.io/badge/node-%3E%3D20.6-green)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20windows%20%7C%20macos-lightgrey)
 
-Lucian Code não é apenas um chatbot. É um agente que raciocina, planeja e executa ações em um pipeline estruturado. Ele interpreta suas solicitações, divide tarefas complexas em etapas gerenciáveis e executa cada passo com confirmação explícita.
+---
+
+## Por que Lucian Code?
+
+Ferramentas como Claude Code e Cursor são poderosas, mas caras e fechadas. O Lucian Code nasce como alternativa real:
+
+| | Lucian Code | Claude Code |
+|---|---|---|
+| Custo | Gratuito (Ollama) ou pay-per-use | Assinatura obrigatória |
+| Modelos locais | ✅ via Ollama | ❌ |
+| Open-source | ✅ | ❌ |
+| Modelos brasileiros | ✅ Maritaca AI | ❌ |
+| Customização por projeto | ✅ LUCIAN.md | ✅ CLAUDE.md |
+
+---
 
 ## Características
 
-- **Modos de operação**: Chat, Plan e Build
-- **Troca dinâmica de modelos**: Use qualquer modelo disponível no OpenRouter
-- **Execução agêntica real**: Cria, edita e gerencia arquivos no sistema
-- **Memória de sessão**: Mantém contexto durante a sessão
-- **Interface limpa**: Terminal UI minimalista, sem distrações
-- **Extensível**: Arquitetura modular preparada para plugins
+- **3 modos de operação**: Chat, Plan e Build
+- **Modelos locais via Ollama**: rode de graça, sem API key, sem internet
+- **Maritaca AI**: suporte nativo ao Sabiá-3 e outros modelos brasileiros
+- **OpenRouter**: acesso a 100+ modelos (GPT-4o, Claude, Gemini, Llama...)
+- **Troca dinâmica de modelos**: mude o modelo sem reiniciar a sessão
+- **Execução agêntica real**: cria, edita e gerencia arquivos no sistema
+- **LUCIAN.md**: customização de comportamento por projeto
+- **Memória de sessão**: mantém contexto durante a conversa
+- **Arquitetura modular**: fácil de estender com novos providers
+
+---
 
 ## Requisitos
 
 - Node.js 20.6 ou superior
-- Uma chave de API do OpenRouter (https://openrouter.ai)
-- Uma API Key do Maritaca AI (opcional)
+- Uma das opções abaixo:
+  - [Ollama](https://ollama.ai) instalado localmente *(grátis, sem API key)*
+  - Chave de API do [OpenRouter](https://openrouter.ai) *(pay-per-use)*
+  - Chave de API da [Maritaca AI](https://maritaca.ai) *(modelos brasileiros)*
+
+---
 
 ## Instalação
-
-### Do código fonte
 
 ```bash
 git clone https://github.com/arthurg-santos/lucian-code.git
@@ -31,23 +54,21 @@ cd lucian-code
 npm install
 ```
 
-### Configurando a API
+### Configurando providers
 
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
+# OpenRouter (opcional)
 OPENROUTER_API_KEY=sua_chave_aqui
-```
 
-Ou exporte a variável de ambiente no seu terminal:
+# Maritaca AI (opcional)
+MARITACA_API_KEY=sua_chave_aqui
 
-```bash
-export OPENROUTER_API_KEY=sua_chave_aqui
+# Ollama não precisa de chave — apenas instale e rode localmente
 ```
 
 ### Compilando para executável
-
-O projeto pode ser compilado para Windows, Linux e macOS usando Bun:
 
 ```bash
 # Instalar Bun (se ainda não tiver)
@@ -57,54 +78,37 @@ curl -fsSL https://bun.sh/install | bash
 npm run build:all
 
 # Ou compilar para uma plataforma específica
-npm run build:linux   # Linux x64
-npm run build:win     # Windows x64
-npm run build:macos   # macOS x64
-npm run build:macos-arm  # macOS ARM (Apple Silicon)
+npm run build:linux       # Linux x64
+npm run build:win         # Windows x64
+npm run build:macos       # macOS x64
+npm run build:macos-arm   # macOS ARM (Apple Silicon)
 ```
 
 Os executáveis serão gerados em `dist/`.
 
-## Uso
+---
 
-### Executando com Node.js
+## Uso
 
 ```bash
 npm start
 ```
 
-### Executando o executável compilado
+Ou via executável compilado:
 
 ```bash
-./bin/lucian-linux    # Linux
-./bin/lucian.exe      # Windows
-./bin/lucian-macos    # macOS
+./bin/lucian-linux   # Linux
+./bin/lucian.exe     # Windows
+./bin/lucian-macos   # macOS
 ```
-
-### Comandos disponíveis
-
-| Comando | Descrição |
-|---------|-----------|
-| `/help` | Exibe todos os comandos disponíveis |
-| `/chat` | Alterna para o modo Chat (conversa direta) |
-| `/plan` | Alterna para o modo Plan (apenas planejamento) |
-| `/build` | Alterna para o modo Build (execução agêntica) |
-| `/switch-model <modelo>` | Define o modelo ativo (ex: `anthropic/claude-3.5-sonnet`) |
-| `/set-fallback <modelo>` | Define o modelo de fallback |
-| `/models` | Mostra a configuração atual de modelos |
-| `/status` | Exibe o estado atual do sistema |
-| `/reset` | Limpa a memória da sessão |
 
 ### Modos de operação
 
-**Chat Mode** (padrão)
-Conversa direta com o modelo. Responde perguntas e explica conceitos sem executar ações.
+**Chat Mode** (padrão) — conversa direta, sem executar ações.
 
-**Plan Mode**
-O agente analisa sua solicitação e produz um plano estruturado contendo objetivo, etapas, riscos e dependências. Nenhuma execução ocorre neste modo.
+**Plan Mode** — analisa a solicitação e produz um plano com objetivo, etapas, riscos e dependências. Nenhuma execução ocorre.
 
-**Build Mode**
-O agente executa o plano passo a passo, criando e editando arquivos no sistema. Cada ação é registrada e pode ser acompanhada em tempo real.
+**Build Mode** — executa o plano passo a passo, criando e editando arquivos no sistema.
 
 ### Exemplo de uso
 
@@ -119,10 +123,6 @@ Parameters: { "path": "user-api" }
 Result: Directory created: user-api
 
 [Tool Call] create_file
-Parameters: { "path": "user-api/package.json", "content": "..." }
-Result: File created: user-api/package.json
-
-[Tool Call] create_file
 Parameters: { "path": "user-api/server.js", "content": "..." }
 Result: File created: user-api/server.js
 
@@ -134,42 +134,73 @@ Projeto criado com sucesso. Para executar:
 --------------------
 ```
 
+### Comandos disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `/help` | Exibe todos os comandos |
+| `/chat` | Alterna para Chat Mode |
+| `/plan` | Alterna para Plan Mode |
+| `/build` | Alterna para Build Mode |
+| `/switch-model <modelo>` | Define o modelo ativo |
+| `/set-fallback <modelo>` | Define o modelo de fallback |
+| `/models` | Mostra a configuração atual |
+| `/status` | Exibe o estado atual |
+| `/reset` | Limpa a memória da sessão |
+
+### Providers e modelos
+
+**Ollama (local, gratuito)**
+```bash
+# Instale o modelo antes de usar
+ollama pull llama3.2
+ollama pull qwen2.5-coder
+
+# No Lucian:
+lucian> /switch-model ollama/llama3.2
+```
+
+**Maritaca AI (modelos brasileiros)**
+```bash
+lucian> /switch-model sabia-3
+```
+
+**OpenRouter**
+```bash
+lucian> /switch-model qwen/qwen3.7-plus          # padrão
+lucian> /switch-model anthropic/claude-3.5-sonnet
+lucian> /switch-model openai/gpt-4o
+lucian> /switch-model meta-llama/llama-3.1-405b-instruct
+```
+
+---
+
 ## Customização por Projeto (LUCIAN.md)
 
-Você pode personalizar o comportamento do Lucian para cada projeto criando um arquivo `LUCIAN.md` na raiz do projeto onde você executa o CLI.
-
-O arquivo é carregado automaticamente em toda sessão e injetado no system prompt — em todos os modos (CHAT, PLAN e BUILD).
-
-Um `LUCIAN.md` padrão é incluído no repositório como ponto de partida. Edite-o conforme as necessidades do seu projeto:
+Crie um `LUCIAN.md` na raiz do projeto onde você executa o CLI. Ele é carregado automaticamente e injetado no system prompt em todos os modos.
 
 ```markdown
 # LUCIAN.md
 
 ## Project Overview
-Esta é uma API REST em Node.js com Express e PostgreSQL via Prisma.
+API REST em Node.js com Express e PostgreSQL via Prisma.
 
 ## Tech Stack
 - Language: TypeScript
 - Framework: Express
-- Database: PostgreSQL
+- Database: PostgreSQL (Prisma ORM)
 
-## Code Style & Conventions
+## Code Style
 - Use ES Modules
 - Prefer async/await
 - File names: kebab-case
 
-## Behavioral Rules
+## Regras
 - Nunca use console.log — use o Logger em src/utils/logger.js
 - Não instale dependências sem perguntar primeiro
 ```
 
-**Como funciona:**
-
-1. Ao iniciar o Lucian, ele busca `LUCIAN.md` no diretório de trabalho atual (`process.cwd()`).
-2. Se encontrado, o conteúdo é adicionado ao system prompt de todos os modos.
-3. Se não encontrado, o comportamento padrão é mantido sem alterações.
-
-O `LUCIAN.md` é ideal para definir o stack do projeto, convenções de código, estrutura de diretórios e regras específicas que o agente deve seguir.
+---
 
 ## Arquitetura
 
@@ -187,7 +218,9 @@ src/
 │   └── config.js         # Configurações globais
 ├── providers/
 │   ├── base.js           # Interface abstrata de provider
-│   └── openrouter.js     # Implementação OpenRouter
+│   ├── openrouter.js     # Implementação OpenRouter
+│   ├── ollama.js         # Implementação Ollama (local)
+│   └── maritaca.js       # Implementação Maritaca AI
 ├── memory/
 │   └── store.js          # Gerenciamento de memória de sessão
 └── utils/
@@ -200,68 +233,73 @@ src/
 INPUT → ANALYZE → PLAN → EXECUTE → VERIFY → OUTPUT
 ```
 
-Cada etapa é explícita e registrada. Em Build Mode, o ciclo inclui chamadas de ferramentas com confirmação.
+Cada etapa é explícita e registrada. Em Build Mode, o ciclo inclui chamadas de ferramentas com confirmação antes de modificar o sistema de arquivos.
 
-## Ferramentas disponíveis
+### Ferramentas disponíveis em Build Mode
 
-O agente possui acesso às seguintes ferramentas em Build Mode:
+| Ferramenta | O que faz |
+|---|---|
+| `create_file` | Cria novos arquivos |
+| `edit_file` | Substitui o conteúdo completo de um arquivo |
+| `replace_in_file` | Substitui padrões de texto específicos |
+| `insert_at_line` | Insere conteúdo em uma linha específica |
+| `delete_file` | Remove arquivos |
+| `create_directory` | Cria diretórios |
+| `list_files` | Lista conteúdo de diretórios |
+| `read_file` | Lê o conteúdo de arquivos |
 
-- `create_file`: Cria novos arquivos
-- `edit_file`: Substitui o conteúdo completo de arquivos existentes
-- `replace_in_file`: Substitui padrões de texto específicos
-- `insert_at_line`: Insere conteúdo em números de linha específicos
-- `delete_file`: Remove arquivos
-- `create_directory`: Cria diretórios
-- `list_files`: Lista conteúdo de diretórios
-- `read_file`: Lê o conteúdo de arquivos
-
-## Modelos suportados
-
-Qualquer modelo disponível no OpenRouter pode ser usado. Alguns exemplos:
-
-- `qwen/qwen3.7-plus` (padrão)
-- `anthropic/claude-3.5-sonnet`
-- `openai/gpt-4o`
-- `google/gemini-pro-1.5`
-- `meta-llama/llama-3.1-405b-instruct`
-
-Use `/switch-model` para alternar entre modelos a qualquer momento.
+---
 
 ## Contribuindo
 
-Contribuições são bem-vindas. Para contribuir:
+Contribuições são bem-vindas — especialmente novos providers e ferramentas.
 
-1. Fork o repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
+### Rodando localmente para desenvolvimento
 
-### Diretrizes
+```bash
+git clone https://github.com/arthurg-santos/lucian-code.git
+cd lucian-code
+npm install
+cp .env.example .env   # configure suas chaves
+npm start
+```
 
-- Mantenha o código limpo e bem documentado
-- Siga o estilo de código existente
-- Adicione testes quando aplicável
-- Atualize a documentação se necessário
+### Adicionando um novo provider
+
+1. Crie `src/providers/seu-provider.js` seguindo a interface de `src/providers/base.js`
+2. Registre no arquivo de configuração em `src/core/config.js`
+3. Adicione os modelos suportados na tabela do README
+4. Abra um PR com um exemplo de uso
+
+### Fluxo de contribuição
+
+```bash
+git checkout -b feature/minha-feature
+git commit -m 'feat: adiciona suporte a X'
+git push origin feature/minha-feature
+# Abra um Pull Request
+```
+
+> Procurando por onde começar? Veja as issues marcadas com `good first issue`.
+
+---
 
 ## Roadmap
 
-- [ ] Sistema de plugins
-- [ ] Suporte a múltiplos providers (OpenAI, Anthropic, etc)
+- [x] Suporte a OpenRouter
+- [x] Suporte a Ollama (modelos locais)
+- [x] Suporte a Maritaca AI
+- [x] Customização por projeto via LUCIAN.md
 - [ ] Execução de comandos shell
 - [ ] Integração com git
+- [ ] Sistema de plugins/skills
 - [ ] Testes automatizados
-- [ ] Documentação completa da API
+
+---
 
 ## Licença
 
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## Agradecimentos
-
-- OpenRouter pela API unificada de modelos
-- Comunidade open-source pelas ferramentas e bibliotecas
-- Todos os contribuidores que ajudam a melhorar o projeto
+MIT — veja [LICENSE](LICENSE) para detalhes.
 
 ---
 
