@@ -26,7 +26,7 @@ Lucian Code não é apenas um chatbot. É um agente que raciocina, planeja e exe
 ### Do código fonte
 
 ```bash
-git clone https://github.com/seu-usuario/lucian-code.git
+git clone https://github.com/arthurg-santos/lucian-code.git
 cd lucian-code
 npm install
 ```
