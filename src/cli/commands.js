@@ -3,6 +3,7 @@ import { printHelp, renderStatus } from "./ui.js";
 import { OpenRouterProvider } from "../providers/openrouter.js";
 import { MaritalkProvider } from "../providers/maritaca.js";
 import { OllamaProvider } from "../providers/ollama.js";
+import { GroqProvider } from "../providers/groq.js";
 
 export function parseCommand(input, context) {
   const trimmed = input.trim();
@@ -38,14 +39,16 @@ export function parseCommand(input, context) {
     case "/switch-provider":
       if (!args) {
         console.log("Usage: /switch-provider <provider_name>");
-        console.log("Available providers: openrouter, maritaca, ollama");
-        console.log("Example: /switch-provider maritaca\n");
+        console.log("Available providers: openrouter, maritaca, ollama, groq");
+        console.log("Example: /switch-provider groq\n");
       } else {
         const providerName = args.toLowerCase();
 
         if (!Object.values(CONFIG.PROVIDERS).includes(providerName)) {
           console.log(`Unknown provider: ${providerName}`);
-          console.log("Available providers: openrouter, maritaca, ollama\n");
+          console.log(
+            "Available providers: openrouter, maritaca, ollama, groq\n",
+          );
           return { type: "SYSTEM", payload: null };
         }
 
@@ -86,6 +89,19 @@ export function parseCommand(input, context) {
               newProvider = new OllamaProvider(
                 ollamaUrl,
                 CONFIG.OLLAMA_DEFAULT_MODEL || "llama3",
+              );
+              break;
+
+            case CONFIG.PROVIDERS.GROQ:
+              if (!process.env.GROQ_API_KEY) {
+                console.log(
+                  "[ERROR] GROQ_API_KEY environment variable is not set.\n",
+                );
+                return { type: "SYSTEM", payload: null };
+              }
+              newProvider = new GroqProvider(
+                process.env.GROQ_API_KEY,
+                CONFIG.GROQ_DEFAULT_MODEL,
               );
               break;
           }

@@ -30,7 +30,7 @@ export function printHelp() {
   console.log("  /build                 - Switch to BUILD MODE");
   console.log("  /chat                  - Switch to CHAT MODE");
   console.log(
-    "  /switch-provider <p>   - Switch active provider (openrouter, maritaca, ollama)",
+    "  /switch-provider <p>   - Switch active provider (openrouter, maritaca, ollama, groq)",
   );
   console.log(
     "  /switch-model <m>      - Set active AI model (any model from current provider)",

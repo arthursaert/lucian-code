@@ -10,6 +10,7 @@ import { MemoryStore } from "./memory/store.js";
 import { OpenRouterProvider } from "./providers/openrouter.js";
 import { MaritalkProvider } from "./providers/maritaca.js";
 import { OllamaProvider } from "./providers/ollama.js";
+import { GroqProvider } from "./providers/groq.js";
 
 async function main() {
   printBanner();
@@ -17,7 +18,13 @@ async function main() {
   let provider;
   let providerName;
 
-  if (process.env.MARITACA_API_KEY) {
+  if (process.env.GROQ_API_KEY) {
+    providerName = CONFIG.PROVIDERS.GROQ;
+    provider = new GroqProvider(
+      process.env.GROQ_API_KEY,
+      CONFIG.GROQ_DEFAULT_MODEL,
+    );
+  } else if (process.env.MARITACA_API_KEY) {
     providerName = CONFIG.PROVIDERS.MARITACA;
     provider = new MaritalkProvider(
       process.env.MARITACA_API_KEY,
